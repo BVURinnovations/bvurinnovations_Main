@@ -3,6 +3,7 @@ package com.bvurinnovations.controller;
 import com.bvurinnovations.config.EndPointConfig;
 import com.bvurinnovations.dto.AdminUserDTO;
 import com.bvurinnovations.dto.LoginDTO;
+import com.bvurinnovations.dto.ServiceDTO;
 import com.bvurinnovations.dto.WorkspaceDTO;
 import com.bvurinnovations.service.AdminUserService;
 import com.bvurinnovations.util.Constants;
@@ -45,6 +46,14 @@ public class AdminUserController {
             throw new Exception("USER_DTO_MISSING");
         }
         return adminUserService.registerAdminUser(dto);
+    }
+
+    @RequestMapping(value = EndPointConfig.SERVICES, method = RequestMethod.GET)
+    public List<ServiceDTO> getServiceDetails(@PathVariable(value = "userId") String userId) throws Exception {
+        if (userId == null) {
+            throw new Exception("USER_ID_MISSING");
+        }
+        return adminUserService.getServiceDetails(userId);
     }
 
     @RequestMapping(value = EndPointConfig.CREATE_WORKSPACE, method = RequestMethod.POST)
