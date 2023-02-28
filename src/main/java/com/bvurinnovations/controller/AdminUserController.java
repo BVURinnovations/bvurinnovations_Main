@@ -9,11 +9,9 @@ import com.bvurinnovations.service.AdminUserService;
 import com.bvurinnovations.util.Constants;
 import com.bvurinnovations.util.S3Utils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.websocket.server.PathParam;
 import java.util.List;
 
 @RestController
@@ -57,12 +55,30 @@ public class AdminUserController {
     }
 
     @RequestMapping(value = EndPointConfig.CREATE_WORKSPACE, method = RequestMethod.POST)
-    public String createWorkspace(@RequestBody WorkspaceDTO dto, @RequestPart("file") List<MultipartFile> files,
+    public String createWorkspace(@RequestBody WorkspaceDTO dto, @RequestPart(value = "file", required = false) List<MultipartFile> files,
                                         @RequestParam(value = "userId")String userId) throws Exception {
         if (dto == null) {
             throw new Exception("USER_DTO_MISSING");
         }
         return adminUserService.createWorkspace(dto, userId, files);
+    }
+
+    @RequestMapping(value = EndPointConfig.MODIFY_WORKSPACE, method = RequestMethod.DELETE)
+    public String deleteWorkspace(@PathVariable(value = "id") String id,
+                                  @RequestParam(value = "userId")String userId) throws Exception {
+        if (id == null) {
+            throw new Exception("USER_ID_MISSING");
+        }
+        return adminUserService.markWorkspaceDeleted(id, userId);
+    }
+
+    @RequestMapping(value = EndPointConfig.MODIFY_WORKSPACE, method = RequestMethod.PUT)
+    public String modifyWorkspace(@RequestBody WorkspaceDTO dto, @PathVariable(value = "id") String id,
+                                  @RequestParam(value = "userId")String userId) throws Exception {
+        if (dto == null) {
+            throw new Exception("USER_DTO_MISSING");
+        }
+        return adminUserService.modifyWorkspace(dto, userId, id);
     }
 
     @RequestMapping(value = "test", method = RequestMethod.GET)

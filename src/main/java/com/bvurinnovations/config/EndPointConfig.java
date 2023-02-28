@@ -8,4 +8,5 @@ public class EndPointConfig {
     public static final String REGISTER = "/register";
     public static final String CREATE_WORKSPACE = "/workspace/create";
     public static final String SERVICES = "/services";
+    public static final String MODIFY_WORKSPACE = "/workspace/{id}/modify";
 }

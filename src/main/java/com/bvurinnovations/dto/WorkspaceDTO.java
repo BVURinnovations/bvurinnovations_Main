@@ -3,11 +3,12 @@ package com.bvurinnovations.dto;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serializable;
 import java.util.Date;
 
 @Getter
 @Setter
-public class WorkspaceDTO {
+public class WorkspaceDTO implements Serializable {
     private String id;
     private String designationName;
     private String about;
@@ -19,15 +20,16 @@ public class WorkspaceDTO {
     private String city;
     private int pincode;
     private String state;
-    private String education;
-    private String expertise;
-    private String workplaceTime;
+
+    private Object education;
+    private Object expertise;
+    private Object workplaceTime;
     private String createdBy;
     private String modifiedBy;
     private Date createdAt;
     private Date modifiedAt;
     private boolean isActive;
-    private String upload;
+    private Object upload;
     private int rate;
     private String status;
 }

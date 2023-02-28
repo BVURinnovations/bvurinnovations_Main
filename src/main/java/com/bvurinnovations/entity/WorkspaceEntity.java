@@ -1,18 +1,18 @@
 package com.bvurinnovations.entity;
 
+import com.fasterxml.jackson.annotation.JsonRawValue;
+import com.fasterxml.jackson.databind.util.JSONPObject;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import javax.persistence.*;
 import java.util.Date;
 
 @Getter
 @Setter
 @Entity
+@Table(name = "workspace")
 public class WorkspaceEntity {
     @Id
     @GeneratedValue(generator = "uuid")
@@ -28,18 +28,22 @@ public class WorkspaceEntity {
     private String city;
     private int pincode;
     private String state;
-    @Column(columnDefinition = "JSON")
+    @Column(name = "education", columnDefinition = "JSON")
+    @JsonRawValue
     private String education;
-    @Column(columnDefinition = "JSON")
+    @Column(name = "expertise", columnDefinition = "JSON")
+    @JsonRawValue
     private String expertise;
     @Column(columnDefinition = "JSON")
+    @JsonRawValue
     private String workplaceTime;
     private String createdBy;
     private String modifiedBy;
     private Date createdAt;
     private Date modifiedAt;
     private boolean isActive;
-    @Column(columnDefinition = "JSON")
+    @Column(name = "upload", columnDefinition = "JSON")
+    @JsonRawValue
     private String upload;
     private int rate;
     private String status;

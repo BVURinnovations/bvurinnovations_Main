@@ -13,6 +13,10 @@ import com.bvurinnovations.repository.AdminUserRepository;
 import com.bvurinnovations.repository.ServicesRepository;
 import com.bvurinnovations.repository.WorkspaceRepository;
 import com.bvurinnovations.util.Constants;
+import com.bvurinnovations.util.OTPUtil;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mashape.unirest.http.exceptions.UnirestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -36,7 +40,11 @@ public class AdminUserService {
     @Autowired
     WorkspaceRepository workspaceRepository;
 
-    public String getUserDetail(LoginDTO loginDTO, boolean resend) {
+    OTPUtil otpUtil = new OTPUtil();
+
+    private String jsonData;
+
+    public String getUserDetail(LoginDTO loginDTO, boolean resend) throws UnirestException {
         String otpType = Constants.LOGIN_OTP;
         AdminUserEntity entity = adminUserRepository.findAdminUserByMobile(loginDTO.getMobile());
         if (entity == null) {
@@ -63,6 +71,8 @@ public class AdminUserService {
         otpEntity.setVerified(false);
         otpEntity.setCreatedAt(new Date());
         otpRepository.save(otpEntity);
+        String mobile = entity.getCountryCode() + entity.getMobile();
+        otpUtil.sendOTPWithTemplate(mobile, Constants.LOGIN_OTP_TEMPLATE, number);
 
         return entity.getId();
     }
@@ -140,12 +150,16 @@ public class AdminUserService {
         return "WORKSPACE_CREATED";
     }
 
-    public String modifyWorkspace(WorkspaceDTO dto, String userId) throws Exception {
+    public String modifyWorkspace(WorkspaceDTO dto, String userId, String id) throws Exception {
         AdminUserEntity userEntity = adminUserRepository.findAdminUserById(userId);
         if (userEntity == null) {
             throw new Exception("USER_NOT_FOUND");
         }
-        WorkspaceEntity entity = mapWorkspaceDTO(dto);
+        WorkspaceEntity entity = workspaceRepository.findWorkspaceByIdAndUserId(id, userId);
+        if (entity == null) {
+            throw new Exception("WORKSPACE_NOT_FOUND");
+        }
+        entity = mapWorkspaceDTO(dto);
         entity.setModifiedBy(userEntity.getId());
         return "WORKSPACE_MODIFIED";
     }
@@ -161,12 +175,23 @@ public class AdminUserService {
         entity.setCity(dto.getCity());
         entity.setPincode(dto.getPincode());
         entity.setState(dto.getState());
-        entity.setEducation(dto.getEducation());
-        entity.setExpertise(dto.getExpertise());
-        entity.setWorkplaceTime(dto.getWorkplaceTime());
-        entity.setUpload(dto.getUpload());
+        String education = setJsonData(dto.getEducation().toString());
+        entity.setEducation(education);
+        entity.setExpertise(setJsonData(dto.getExpertise().toString()));
+        entity.setWorkplaceTime(setJsonData(dto.getWorkplaceTime().toString()));
+        entity.setUpload(setJsonData(dto.getUpload().toString()));
         entity.setRate(dto.getRate());
         return entity;
+    }
+
+    public String setJsonData(String jsonData) {
+        // Method parameter jsonData is simply ignored
+        try {
+            return this.jsonData = new ObjectMapper().writeValueAsString(jsonData);
+        } catch (JsonProcessingException e) {
+            System.out.println(e);
+        }
+        return null;
     }
 
     public String markWorkspaceDeleted(String workspaceId, String userId) throws Exception {
