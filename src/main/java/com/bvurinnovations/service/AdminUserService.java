@@ -6,14 +6,8 @@ import com.bvurinnovations.dto.AdminUserDTO;
 import com.bvurinnovations.dto.LoginDTO;
 import com.bvurinnovations.dto.ServiceDTO;
 import com.bvurinnovations.dto.WorkspaceDTO;
-import com.bvurinnovations.entity.AdminOTPEntity;
-import com.bvurinnovations.entity.AdminUserEntity;
-import com.bvurinnovations.entity.ServiceEntity;
-import com.bvurinnovations.entity.WorkspaceEntity;
-import com.bvurinnovations.repository.AdminOTPRepository;
-import com.bvurinnovations.repository.AdminUserRepository;
-import com.bvurinnovations.repository.ServicesRepository;
-import com.bvurinnovations.repository.WorkspaceRepository;
+import com.bvurinnovations.entity.*;
+import com.bvurinnovations.repository.*;
 import com.bvurinnovations.util.Constants;
 import com.bvurinnovations.util.OTPUtil;
 import com.bvurinnovations.util.S3Utils;
@@ -44,6 +38,9 @@ public class AdminUserService {
 
     @Autowired
     WorkspaceRepository workspaceRepository;
+
+    @Autowired
+    RollRepository rollRepository;
 
     OTPUtil otpUtil = new OTPUtil();
 
@@ -195,25 +192,42 @@ public class AdminUserService {
         return true;
     }
 
-    public boolean uploadRolls(String userId, MultipartFile file) throws Exception {
+    public boolean uploadRolls(String userId, MultipartFile file, String description) throws Exception {
         AdminUserEntity userEntity = adminUserRepository.findAdminUserById(userId);
         if (userEntity == null) {
             throw new Exception("USER_NOT_FOUND");
         }
         AmazonS3 s3Client =S3Utils.getS3Client();
         File uploadFile = convert(file);
-        s3Client.putObject("ap-sounth-1-dev-furrcrew", "rolls" + "/" + uploadFile, uploadFile);
+        String path = "rolls" + "/" + uploadFile;
+        RollEntity rollEntity = new RollEntity();
+        rollEntity.setDescription(description);
+        rollEntity.setCreatedAt(new Date());
+        rollEntity.setStatus(Constants.ACTIVE);
+        rollEntity.setLocation(path);
+        rollEntity.setCreatedBy(userId);
+        rollEntity.setLikeCount(0);
+        rollEntity.setSharedCount(0);
+        rollRepository.save(rollEntity);
+        String s= "";
+        s3Client.putObject("ap-sounth-1-dev-furrcrew", path, uploadFile);
+
         return true;
     }
 
-    public String getRolls() {
+    public List<String> getRolls(String userId) {
         AmazonS3 s3Client =S3Utils.getS3Client();
-        S3Object s3Object = s3Client.getObject("ap-sounth-1-dev-furrcrew", "rolls/sample-mp4-file-small.mp4");
-        Calendar currentTimeNow = Calendar.getInstance();
-        currentTimeNow.add(Calendar.MINUTE, 10);
-        Date date = currentTimeNow.getTime();
-        URL url = s3Client.generatePresignedUrl("ap-sounth-1-dev-furrcrew", "rolls/sample-mp4-file-small.mp4", date);
-        return url.toString();
+        List<RollEntity> rolls = rollRepository.getRollsByUserId(userId);
+        List<String> list = new ArrayList<>();
+        for (RollEntity entity : rolls) {
+            //S3Object s3Object = s3Client.getObject("ap-sounth-1-dev-furrcrew", "rolls/sample-mp4-file-small.mp4");
+            Calendar currentTimeNow = Calendar.getInstance();
+            currentTimeNow.add(Calendar.MINUTE, 10);
+            Date date = currentTimeNow.getTime();
+            URL url = s3Client.generatePresignedUrl("ap-sounth-1-dev-furrcrew", entity.getLocation(), date);
+            list.add(url.toString());
+        }
+        return list;
     }
 
     public String modifyWorkspace(WorkspaceDTO dto, String userId, String id) throws Exception {

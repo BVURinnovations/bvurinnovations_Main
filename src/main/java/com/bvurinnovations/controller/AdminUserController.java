@@ -100,17 +100,17 @@ public class AdminUserController {
     }
 
     @RequestMapping(value = EndPointConfig.UPLOAD_ROLL, method = RequestMethod.POST, consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
-    public ResponseEntity<?> uploadRolls(@RequestPart(value = "file") MultipartFile file,
-                                                         @RequestParam(value = "userId")String userId) throws Exception {
+    public ResponseEntity<?> uploadRolls(@RequestPart(value = "file") MultipartFile file, @RequestPart("description") String description,
+                                         @RequestParam(value = "userId")String userId) throws Exception {
         ModelMap map = new ModelMap();
-        map.put("isUploaded",adminUserService.uploadRolls(userId, file));
+        map.put("isUploaded",adminUserService.uploadRolls(userId, file, description));
         return new ResponseEntity<>(map, HttpStatus.OK);
     }
 
     @RequestMapping(value = EndPointConfig.ROLL, method = RequestMethod.GET)
     public ResponseEntity<?> getRolls(@RequestParam(value = "userId")String userId) throws Exception {
         ModelMap map = new ModelMap();
-        map.put("isUploaded",adminUserService.getRolls());
+        map.put("isUploaded",adminUserService.getRolls(userId));
         return new ResponseEntity<>(map, HttpStatus.OK);
     }
 

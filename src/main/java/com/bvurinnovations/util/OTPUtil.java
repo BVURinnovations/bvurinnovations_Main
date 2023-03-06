@@ -1,10 +1,8 @@
 package com.bvurinnovations.util;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
-import org.springframework.util.StringUtils;
 
 public class OTPUtil {
     public boolean sendOTPWithTemplate(String mobile, String template, int otp) throws UnirestException {
