@@ -8,7 +8,12 @@ import com.bvurinnovations.dto.WorkspaceDTO;
 import com.bvurinnovations.service.AdminUserService;
 import com.bvurinnovations.util.Constants;
 import com.bvurinnovations.util.S3Utils;
+import com.sun.istack.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,44 +28,49 @@ public class AdminUserController {
 
 
     @RequestMapping(value = EndPointConfig.LOGIN_OTP, method = RequestMethod.POST)
-    public String getUserDetails(@RequestBody LoginDTO loginDTO, @RequestParam(value = "resend", required = false) boolean resend) throws Exception {
+    public ResponseEntity<?> getUserDetails(@RequestBody LoginDTO loginDTO, @RequestParam(value = "resend", required = false) boolean resend) throws Exception {
         if (loginDTO == null || loginDTO.getCountryCode() == null || loginDTO.getMobile() == null) {
             throw new Exception("PHONE_NUMBER_OR_COUNTRY_CODE_MISSING");
         }
-        return adminUserService.getUserDetail(loginDTO, resend);
+        ModelMap map = new ModelMap();
+        map.put("id", adminUserService.getUserDetail(loginDTO, resend));
+        return new ResponseEntity<>(map, HttpStatus.OK);
     }
 
     @RequestMapping(value = EndPointConfig.VERIFY_OTP, method = RequestMethod.POST)
-    public AdminUserDTO verifyAdminUserOTP(@PathVariable("id") String id, @PathVariable("otp") Integer otp) throws Exception {
-        if (id == null || id.isEmpty()) {
-            throw new Exception("USER_ID_OR_OTP_MISSING");
-        }
-        return adminUserService.verifyAdminUserOTP(id, otp);
+    public ResponseEntity<AdminUserDTO> verifyAdminUserOTP(@NotNull @PathVariable("id") String id, @NotNull @PathVariable("otp") Integer otp) throws Exception {
+
+        return new ResponseEntity<>(adminUserService.verifyAdminUserOTP(id, otp), HttpStatus.OK);
     }
 
     @RequestMapping(value = EndPointConfig.REGISTER, method = RequestMethod.POST)
-    public AdminUserDTO verifyAdminUserOTP(@RequestBody AdminUserDTO dto) throws Exception {
+    public ResponseEntity<AdminUserDTO> registerAdminUser(@RequestBody AdminUserDTO dto) throws Exception {
         if (dto == null) {
             throw new Exception("USER_DTO_MISSING");
         }
-        return adminUserService.registerAdminUser(dto);
+        return new ResponseEntity<>(adminUserService.registerAdminUser(dto), HttpStatus.OK);
     }
 
     @RequestMapping(value = EndPointConfig.SERVICES, method = RequestMethod.GET)
-    public List<ServiceDTO> getServiceDetails(@PathVariable(value = "userId") String userId) throws Exception {
-        if (userId == null) {
-            throw new Exception("USER_ID_MISSING");
-        }
-        return adminUserService.getServiceDetails(userId);
+    public ResponseEntity<List<ServiceDTO>> getServiceDetails(@NotNull @PathVariable(value = "userId") String userId) throws Exception {
+
+        return new ResponseEntity<>(adminUserService.getServiceDetails(userId), HttpStatus.OK);
     }
 
     @RequestMapping(value = EndPointConfig.CREATE_WORKSPACE, method = RequestMethod.POST)
-    public String createWorkspace(@RequestBody WorkspaceDTO dto, @RequestPart(value = "file", required = false) List<MultipartFile> files,
-                                        @RequestParam(value = "userId")String userId) throws Exception {
+    public String createWorkspace(@RequestBody WorkspaceDTO dto, @RequestParam(value = "userId")String userId) throws Exception {
         if (dto == null) {
             throw new Exception("USER_DTO_MISSING");
         }
-        return adminUserService.createWorkspace(dto, userId, files);
+        return adminUserService.createWorkspace(dto, userId);
+    }
+
+    @RequestMapping(value = EndPointConfig.CREATE_WORKSPACE_IMAGE, method = RequestMethod.POST, consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ResponseEntity<?> uploadWorkSpaceImages(@NotNull @PathVariable(value = "workspaceId") String workspaceId, @RequestPart(value = "files") List<MultipartFile> files,
+                                        @RequestParam(value = "userId")String userId) throws Exception {
+        ModelMap map = new ModelMap();
+        map.put("isUploaded",adminUserService.uploadWorkspaceImages(userId, files, workspaceId));
+        return new ResponseEntity<>(map, HttpStatus.OK);
     }
 
     @RequestMapping(value = EndPointConfig.MODIFY_WORKSPACE, method = RequestMethod.DELETE)
@@ -81,9 +91,32 @@ public class AdminUserController {
         return adminUserService.modifyWorkspace(dto, userId, id);
     }
 
+    @RequestMapping(value = EndPointConfig.CREATE_DOCUMENTS_IMAGE, method = RequestMethod.POST, consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ResponseEntity<?> uploadCollaboratorDocuments(@RequestPart(value = "files") List<MultipartFile> files,
+                                                   @RequestParam(value = "userId")String userId) throws Exception {
+        ModelMap map = new ModelMap();
+        map.put("isUploaded",adminUserService.uploadCollaboratorDocuments(userId, files));
+        return new ResponseEntity<>(map, HttpStatus.OK);
+    }
+
+    @RequestMapping(value = EndPointConfig.UPLOAD_ROLL, method = RequestMethod.POST, consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ResponseEntity<?> uploadRolls(@RequestPart(value = "file") MultipartFile file,
+                                                         @RequestParam(value = "userId")String userId) throws Exception {
+        ModelMap map = new ModelMap();
+        map.put("isUploaded",adminUserService.uploadRolls(userId, file));
+        return new ResponseEntity<>(map, HttpStatus.OK);
+    }
+
+    @RequestMapping(value = EndPointConfig.ROLL, method = RequestMethod.GET)
+    public ResponseEntity<?> getRolls(@RequestParam(value = "userId")String userId) throws Exception {
+        ModelMap map = new ModelMap();
+        map.put("isUploaded",adminUserService.getRolls());
+        return new ResponseEntity<>(map, HttpStatus.OK);
+    }
+
     @RequestMapping(value = "test", method = RequestMethod.GET)
     public String test123() throws Exception {
-        S3Utils.getS3ClientWithCredentials(Constants.accessKey, Constants.secretKey);
+        //S3Utils.getS3ClientWithCredentials(Constants.accessKey, Constants.secretKey);
         return "d";
     }
 }

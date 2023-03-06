@@ -1,5 +1,7 @@
 package com.bvurinnovations.service;
 
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.S3Object;
 import com.bvurinnovations.dto.AdminUserDTO;
 import com.bvurinnovations.dto.LoginDTO;
 import com.bvurinnovations.dto.ServiceDTO;
@@ -14,17 +16,20 @@ import com.bvurinnovations.repository.ServicesRepository;
 import com.bvurinnovations.repository.WorkspaceRepository;
 import com.bvurinnovations.util.Constants;
 import com.bvurinnovations.util.OTPUtil;
+import com.bvurinnovations.util.S3Utils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mashape.unirest.http.exceptions.UnirestException;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.URL;
+import java.util.*;
 
 @Service
 public class AdminUserService {
@@ -60,7 +65,7 @@ public class AdminUserService {
         int number = random.nextInt(999999);
         AdminOTPEntity otpEntity;
         if (resend) {
-            otpEntity = otpRepository.findByUserId(entity.getId());
+            otpEntity = otpRepository.findOTPByUserId(entity.getId());
             otpType = Constants.RESEND_OTP;
         } else {
             otpEntity = new AdminOTPEntity();
@@ -135,7 +140,7 @@ public class AdminUserService {
         }
         return dtoList;
     }
-    public String createWorkspace(WorkspaceDTO dto, String userId, List<MultipartFile> file) throws Exception {
+    public String createWorkspace(WorkspaceDTO dto, String userId) throws Exception {
         AdminUserEntity userEntity = adminUserRepository.findAdminUserById(userId);
         if (userEntity == null) {
             throw new Exception("USER_NOT_FOUND");
@@ -148,6 +153,67 @@ public class AdminUserService {
         entity.setStatus(Constants.ACTIVE);
         workspaceRepository.save(entity);
         return "WORKSPACE_CREATED";
+    }
+
+    public boolean uploadWorkspaceImages(String userId, List<MultipartFile> files, String workspaceId) throws Exception {
+        WorkspaceEntity entity = workspaceRepository.findWorkspaceByIdAndUserId(workspaceId, userId);
+        String location = "collaborator/"  + userId + "/workspaceImages/";
+        JSONObject jsonObject = new JSONObject();
+        if (entity != null) {
+
+        } else {
+            throw new Exception("WORKSPACE_NOT_FOUND");
+        }
+
+        AdminUserEntity userEntity = adminUserRepository.findAdminUserById(userId);
+        if (userEntity == null) {
+            throw new Exception("USER_NOT_FOUND");
+        }
+        AmazonS3 s3Client =S3Utils.getS3Client();
+        for (MultipartFile multiPart : files) {
+
+            File file = convert(multiPart);
+            jsonObject.put(file.toString(),location + file);
+            s3Client.putObject("ap-sounth-1-dev-furrcrew", location + file, file);
+
+        }
+        entity.setUpload(jsonObject.toString());
+        return true;
+    }
+
+    public boolean uploadCollaboratorDocuments(String userId, List<MultipartFile> files) throws Exception {
+        AdminUserEntity userEntity = adminUserRepository.findAdminUserById(userId);
+        if (userEntity == null) {
+            throw new Exception("USER_NOT_FOUND");
+        }
+        AmazonS3 s3Client =S3Utils.getS3Client();
+        for (MultipartFile multiPart : files) {
+            File file = convert(multiPart);
+            s3Client.putObject("ap-sounth-1-dev-furrcrew", "collaborator/"  + userId + "/documents" + "/" + file, file);
+
+        }
+        return true;
+    }
+
+    public boolean uploadRolls(String userId, MultipartFile file) throws Exception {
+        AdminUserEntity userEntity = adminUserRepository.findAdminUserById(userId);
+        if (userEntity == null) {
+            throw new Exception("USER_NOT_FOUND");
+        }
+        AmazonS3 s3Client =S3Utils.getS3Client();
+        File uploadFile = convert(file);
+        s3Client.putObject("ap-sounth-1-dev-furrcrew", "rolls" + "/" + uploadFile, uploadFile);
+        return true;
+    }
+
+    public String getRolls() {
+        AmazonS3 s3Client =S3Utils.getS3Client();
+        S3Object s3Object = s3Client.getObject("ap-sounth-1-dev-furrcrew", "rolls/sample-mp4-file-small.mp4");
+        Calendar currentTimeNow = Calendar.getInstance();
+        currentTimeNow.add(Calendar.MINUTE, 10);
+        Date date = currentTimeNow.getTime();
+        URL url = s3Client.generatePresignedUrl("ap-sounth-1-dev-furrcrew", "rolls/sample-mp4-file-small.mp4", date);
+        return url.toString();
     }
 
     public String modifyWorkspace(WorkspaceDTO dto, String userId, String id) throws Exception {
@@ -207,5 +273,19 @@ public class AdminUserService {
     }
 
     public void uploadRoll(List<MultipartFile> file) {
+    }
+
+    private File convert(MultipartFile file) {
+        File convFile = new File(Objects.requireNonNull(file.getOriginalFilename()));
+        try {
+            convFile.createNewFile();
+            FileOutputStream fos = new FileOutputStream(convFile);
+            fos.write(file.getBytes());
+            fos.close(); //IOUtils.closeQuietly(fos);
+        } catch (IOException e) {
+            convFile = null;
+        }
+
+        return convFile;
     }
 }
