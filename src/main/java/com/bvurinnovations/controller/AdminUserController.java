@@ -5,6 +5,7 @@ import com.bvurinnovations.dto.AdminUserDTO;
 import com.bvurinnovations.dto.LoginDTO;
 import com.bvurinnovations.dto.ServiceDTO;
 import com.bvurinnovations.dto.WorkspaceDTO;
+import com.bvurinnovations.entity.WorkspaceEntity;
 import com.bvurinnovations.service.AdminUserService;
 import com.bvurinnovations.util.Constants;
 import com.bvurinnovations.util.S3Utils;
@@ -58,11 +59,11 @@ public class AdminUserController {
     }
 
     @RequestMapping(value = EndPointConfig.CREATE_WORKSPACE, method = RequestMethod.POST)
-    public String createWorkspace(@RequestBody WorkspaceDTO dto, @RequestParam(value = "userId")String userId) throws Exception {
+    public ResponseEntity<WorkspaceEntity> createWorkspace(@RequestBody WorkspaceDTO dto, @RequestParam(value = "userId")String userId) throws Exception {
         if (dto == null) {
             throw new Exception("USER_DTO_MISSING");
         }
-        return adminUserService.createWorkspace(dto, userId);
+        return new ResponseEntity<>(adminUserService.createWorkspace(dto, userId), HttpStatus.OK);
     }
 
     @RequestMapping(value = EndPointConfig.CREATE_WORKSPACE_IMAGE, method = RequestMethod.POST, consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})

@@ -137,7 +137,7 @@ public class AdminUserService {
         }
         return dtoList;
     }
-    public String createWorkspace(WorkspaceDTO dto, String userId) throws Exception {
+    public WorkspaceEntity createWorkspace(WorkspaceDTO dto, String userId) throws Exception {
         AdminUserEntity userEntity = adminUserRepository.findAdminUserById(userId);
         if (userEntity == null) {
             throw new Exception("USER_NOT_FOUND");
@@ -149,7 +149,7 @@ public class AdminUserService {
         entity.setActive(true);
         entity.setStatus(Constants.ACTIVE);
         workspaceRepository.save(entity);
-        return "WORKSPACE_CREATED";
+        return entity;
     }
 
     public boolean uploadWorkspaceImages(String userId, List<MultipartFile> files, String workspaceId) throws Exception {
