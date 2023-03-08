@@ -137,13 +137,14 @@ public class AdminUserService {
         }
         return dtoList;
     }
+
     public WorkspaceEntity createWorkspace(WorkspaceDTO dto, String userId) throws Exception {
         AdminUserEntity userEntity = adminUserRepository.findAdminUserById(userId);
         if (userEntity == null) {
-            throw new Exception("USER_NOT_FOUND");
+            //throw new Exception("USER_NOT_FOUND");
         }
         WorkspaceEntity entity = mapWorkspaceDTO(dto);
-        entity.setCreatedBy(userEntity.getId());
+        entity.setCreatedBy(null);
         entity.setCreatedAt(new Date());
         entity.setUserId(dto.getUserId());
         entity.setActive(true);
@@ -260,7 +261,7 @@ public class AdminUserService {
         entity.setExpertise(setJsonData(dto.getExpertise().toString()));
         entity.setWorkplaceTime(setJsonData(dto.getWorkplaceTime().toString()));
         entity.setUpload(setJsonData(dto.getUpload().toString()));
-        entity.setRate(dto.getRate());
+        entity.setServices(setJsonData(dto.getServices().toString()));
         return entity;
     }
 

@@ -45,6 +45,8 @@ public class WorkspaceEntity {
     @Column(name = "upload", columnDefinition = "JSON")
     @JsonRawValue
     private String upload;
-    private int rate;
+    @Column(name = "services", columnDefinition = "JSON")
+    @JsonRawValue
+    private String services;
     private String status;
 }

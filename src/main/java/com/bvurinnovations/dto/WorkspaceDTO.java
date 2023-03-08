@@ -20,7 +20,7 @@ public class WorkspaceDTO implements Serializable {
     private String city;
     private int pincode;
     private String state;
-
+    private Object services;
     private Object education;
     private Object expertise;
     private Object workplaceTime;
@@ -30,6 +30,5 @@ public class WorkspaceDTO implements Serializable {
     private Date modifiedAt;
     private boolean isActive;
     private Object upload;
-    private int rate;
     private String status;
 }
